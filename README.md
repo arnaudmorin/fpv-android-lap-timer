@@ -4,6 +4,10 @@ A native Android lap timer for FPV drones that uses only the phone's camera: put
 the start gate and it detects the drone flying through it. It started as a port of the
 [RaceGow CAM Timer](https://github.com/xviper25/RaceGow_CAM_Timer) web page.
 
+<p align="center">
+  <img src="screen.png" alt="Timer tab: camera preview with the detection zone, gate line and direction arrow" width="300">
+</p>
+
 ## Features
 
 - **Gate crossing detection**: the detection zone is split by a gate line, and a lap only counts
