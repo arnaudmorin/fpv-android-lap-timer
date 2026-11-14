@@ -50,6 +50,10 @@ class StatsViewModel(private val container: AppContainer) : ViewModel() {
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), StatsUiState())
 
+    fun deleteLap(sessionId: Long, lapIndex: Int) {
+        viewModelScope.launch { container.sessionDao.removeLap(sessionId, lapIndex) }
+    }
+
     fun deleteSession(id: Long) {
         viewModelScope.launch { container.sessionDao.delete(id) }
     }

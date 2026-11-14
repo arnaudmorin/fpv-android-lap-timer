@@ -65,6 +65,8 @@ import com.racegow.camtimer.data.AppSettings
 import com.racegow.camtimer.data.TrackEntity
 import com.racegow.camtimer.data.zone
 import com.racegow.camtimer.ui.MainViewModel
+import com.racegow.camtimer.ui.components.DeleteLapButton
+import com.racegow.camtimer.ui.components.DeleteLapDialog
 import com.racegow.camtimer.ui.components.StatTile
 import com.racegow.camtimer.ui.components.ZoneOverlay
 import com.racegow.camtimer.ui.formatLap
@@ -244,6 +246,7 @@ private fun ColumnScope.TimerControls(
     }
     Spacer(Modifier.height(12.dp))
 
+    var lapToDelete by remember { mutableStateOf<Int?>(null) }
     if (laps.isNotEmpty()) {
         Text("Laps", style = MaterialTheme.typography.titleMedium)
         laps.withIndex().reversed().forEach { (i, ms) ->
@@ -252,7 +255,8 @@ private fun ColumnScope.TimerControls(
                 Modifier
                     .fillMaxWidth()
                     .background(if (isBest) LapGreen.copy(alpha = 0.15f) else Color.Transparent, RoundedCornerShape(6.dp))
-                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                    .padding(start = 10.dp, end = 2.dp, top = 2.dp, bottom = 2.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text("Lap ${i + 1}", modifier = Modifier.weight(1f))
                 Text(
@@ -260,7 +264,22 @@ private fun ColumnScope.TimerControls(
                     fontWeight = if (isBest) FontWeight.Bold else FontWeight.Normal,
                     color = if (isBest) LapGreen else MaterialTheme.colorScheme.onSurface,
                 )
+                DeleteLapButton(lapNumber = i + 1) { lapToDelete = i }
             }
+        }
+    }
+    lapToDelete?.let { index ->
+        val ms = laps.getOrNull(index)
+        if (ms == null) {
+            lapToDelete = null
+        } else {
+            DeleteLapDialog(
+                lapNumber = index + 1,
+                lapMs = ms,
+                note = if (state.running) null else "It is also removed from the saved session.",
+                onConfirm = { vm.deleteLap(index) },
+                onDismiss = { lapToDelete = null },
+            )
         }
     }
 }

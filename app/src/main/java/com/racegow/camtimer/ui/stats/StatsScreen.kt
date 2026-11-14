@@ -46,6 +46,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.racegow.camtimer.core.LapStats
+import com.racegow.camtimer.ui.components.DeleteLapButton
+import com.racegow.camtimer.ui.components.DeleteLapDialog
 import com.racegow.camtimer.ui.components.HelpText
 import com.racegow.camtimer.ui.components.SectionCard
 import com.racegow.camtimer.ui.components.StatTile
@@ -60,6 +62,7 @@ import com.racegow.camtimer.ui.theme.TriggerAmber
 fun StatsScreen(vm: StatsViewModel) {
     val state by vm.state.collectAsStateWithLifecycle()
     var toDelete by remember { mutableStateOf<SessionSummary?>(null) }
+    var lapToDelete by remember { mutableStateOf<Pair<SessionSummary, Int>?>(null) }
     val track = state.track
 
     if (track == null) {
@@ -111,10 +114,23 @@ fun StatsScreen(vm: StatsViewModel) {
             item { HelpText("No sessions yet. Start the timer, fly some laps, then Stop & save.") }
         }
         items(state.sessions, key = { it.session.id }) { summary ->
-            SessionCard(summary, onDelete = { toDelete = summary })
+            SessionCard(
+                summary,
+                onDelete = { toDelete = summary },
+                onDeleteLap = { index -> lapToDelete = summary to index },
+            )
         }
     }
 
+    lapToDelete?.let { (summary, index) ->
+        DeleteLapDialog(
+            lapNumber = index + 1,
+            lapMs = summary.lapsMs[index],
+            note = if (summary.lapsMs.size == 1) "It is the only lap: the session is deleted too." else null,
+            onConfirm = { vm.deleteLap(summary.session.id, index) },
+            onDismiss = { lapToDelete = null },
+        )
+    }
     toDelete?.let { summary ->
         AlertDialog(
             onDismissRequest = { toDelete = null },
@@ -132,7 +148,7 @@ fun StatsScreen(vm: StatsViewModel) {
 }
 
 @Composable
-private fun SessionCard(summary: SessionSummary, onDelete: () -> Unit) {
+private fun SessionCard(summary: SessionSummary, onDelete: () -> Unit, onDeleteLap: (Int) -> Unit) {
     var expanded by rememberSaveable(summary.session.id) { mutableStateOf(false) }
     val best = summary.session.bestLapMs
     val best3 = LapStats.best3Consecutive(summary.lapsMs)
@@ -169,7 +185,8 @@ private fun SessionCard(summary: SessionSummary, onDelete: () -> Unit) {
                             .fillMaxWidth()
                             .padding(end = 12.dp, top = 2.dp)
                             .background(if (isBest) LapGreen.copy(alpha = 0.15f) else Color.Transparent, RoundedCornerShape(6.dp))
-                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                            .padding(start = 8.dp, end = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text("Lap ${i + 1}", modifier = Modifier.weight(1f))
                         if (inBest3) Text("best 3  ", style = MaterialTheme.typography.labelSmall, color = TriggerAmber)
@@ -178,6 +195,7 @@ private fun SessionCard(summary: SessionSummary, onDelete: () -> Unit) {
                             fontWeight = if (isBest) FontWeight.Bold else FontWeight.Normal,
                             color = if (isBest) LapGreen else MaterialTheme.colorScheme.onSurface,
                         )
+                        DeleteLapButton(lapNumber = i + 1) { onDeleteLap(i) }
                     }
                 }
             }

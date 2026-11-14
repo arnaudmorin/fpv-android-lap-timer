@@ -24,6 +24,11 @@ class LapTimer(minLapNanos: Long) {
         lapStartNanos = null
     }
 
+    /** Drops a wrong lap; later laps move up one place, timing of the current lap is unchanged. */
+    fun removeLap(index: Int) {
+        if (index in _laps.indices) _laps.removeAt(index)
+    }
+
     /** Returns null when the trigger falls inside the minimum lap time of the previous one. */
     fun onTrigger(timestampNanos: Long): LapEvent? {
         val last = lastTriggerNanos

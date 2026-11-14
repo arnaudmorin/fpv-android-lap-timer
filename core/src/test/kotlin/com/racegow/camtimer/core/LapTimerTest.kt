@@ -19,6 +19,17 @@ class LapTimerTest {
     }
 
     @Test
+    fun removedLapIsForgottenAndNumberingFollows() {
+        val timer = LapTimer(minLapNanos = s)
+        timer.onTrigger(0)
+        timer.onTrigger(10 * s)
+        timer.onTrigger(12 * s) // false trigger: a 2 s "lap"
+        timer.removeLap(1)
+        assertEquals(listOf(10 * s), timer.laps)
+        assertEquals(LapEvent.Lap(2, 11 * s), timer.onTrigger(23 * s))
+    }
+
+    @Test
     fun resetStartsOver() {
         val timer = LapTimer(minLapNanos = s)
         timer.onTrigger(0)

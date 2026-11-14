@@ -22,6 +22,7 @@ import com.racegow.camtimer.data.SessionEntity
 import com.racegow.camtimer.data.TrackEntity
 import com.racegow.camtimer.data.zone
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -87,6 +88,10 @@ class TimerViewModel(private val container: AppContainer) : ViewModel(), LumaFra
     @Volatile private var settings = AppSettings()
     private var track: TrackEntity? = null
     private var sessionStartedAt = 0L
+
+    /** Session saved by the last Stop, so laps deleted afterwards are removed from it too. */
+    private var savedSessionId: Long? = null
+    private var saveJob: Job? = null
 
     init {
         viewModelScope.launch { container.settings.settings.collect { applySettings(it) } }
@@ -180,6 +185,7 @@ class TimerViewModel(private val container: AppContainer) : ViewModel(), LumaFra
             running = true
         }
         sessionStartedAt = System.currentTimeMillis()
+        savedSessionId = null
         analysisExecutor.execute { crossingDetector.reset() }
         _state.value = TimerUiState(running = true)
     }
@@ -203,20 +209,47 @@ class TimerViewModel(private val container: AppContainer) : ViewModel(), LumaFra
             bestLapMs = LapStats.bestLap(laps),
             best3TotalMs = LapStats.best3Consecutive(laps)?.totalMs,
         )
-        viewModelScope.launch {
-            container.sessionDao.insertWithLaps(session, laps)
+        saveJob = viewModelScope.launch {
+            savedSessionId = container.sessionDao.insertWithLaps(session, laps)
             val prefix = if (backgrounded) "App went to the background. " else ""
             _messages.emit("${prefix}Session saved: ${laps.size} laps")
         }
     }
 
     fun clear() {
-        if (!running) _state.value = TimerUiState()
+        if (running) return
+        _state.value = TimerUiState()
+        savedSessionId = null
+    }
+
+    /**
+     * Deletes a wrong lap (e.g. a false trigger). During a session it is simply dropped; after
+     * Stop & save it is also removed from the saved session.
+     */
+    fun deleteLap(index: Int) {
+        if (index !in _state.value.lapsMs.indices) return
+        if (running) {
+            // Same lock as onGatePass, so both lists stay index-aligned.
+            synchronized(lock) {
+                lapTimer.removeLap(index)
+                _state.update { it.copy(lapsMs = it.lapsMs.withoutIndex(index)) }
+            }
+            return
+        }
+        _state.update { it.copy(lapsMs = it.lapsMs.withoutIndex(index)) }
+        val job = saveJob
+        viewModelScope.launch {
+            job?.join()
+            val id = savedSessionId ?: return@launch
+            if (!container.sessionDao.removeLap(id, index)) savedSessionId = null
+        }
     }
 
     override fun onCleared() {
         analysisExecutor.shutdown()
     }
+
+    private fun List<Long>.withoutIndex(index: Int) = filterIndexed { i, _ -> i != index }
 
     private companion object {
         /** Every 2nd pixel in both directions: 4x less work, plenty for a drone-sized blob. */
