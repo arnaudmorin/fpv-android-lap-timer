@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Stopwatch with a gate arrow, drawn inside the 66dp adaptive-icon safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Watch ring -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#4ADE80"
+        android:strokeWidth="5"
+        android:pathData="M54,30 A26,26 0 1,1 53.99,30 Z" />
+    <!-- Crown -->
+    <path
+        android:fillColor="#4ADE80"
+        android:pathData="M48,20 h12 v6 h-12 Z" />
+    <!-- Arrow crossing the gate, left to right -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FBBF24"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:pathData="M40,56 H66" />
+    <path
+        android:fillColor="#FBBF24"
+        android:pathData="M64,47 L74,56 L64,65 Z" />
+    <!-- Gate line -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3"
+        android:pathData="M54,40 V72" />
+</vector>
