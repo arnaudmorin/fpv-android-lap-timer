@@ -76,3 +76,7 @@ committed on purpose so CI needs no secrets and every build has the same signatu
 trade-off: anyone who can read this repository can sign an APK that installs as an update of the
 app. If that ever matters (for example if the repository is public), move the key to GitHub
 secrets and rotate it.
+
+## License
+
+Licensed under the [Apache License, Version 2.0](LICENSE).
