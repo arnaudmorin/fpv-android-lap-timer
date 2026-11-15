@@ -17,11 +17,11 @@ val signingProps = Properties().apply {
 val buildNumber = (System.getenv("VERSION_CODE") ?: "1").toInt()
 
 android {
-    namespace = "com.racegow.camtimer"
+    namespace = "com.gfpv.camtimer"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.racegow.camtimer"
+        applicationId = "com.gfpv.camtimer"
         minSdk = 26
         targetSdk = 35
         versionCode = buildNumber
